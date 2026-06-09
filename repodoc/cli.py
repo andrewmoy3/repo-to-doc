@@ -29,15 +29,25 @@ def main():
     args = parser.parse_args()
 
     # discover repos from local and github using CLI arguments
-    log.info("Starting repository discovery with local patterns: %s and GitHub token: %s", args.local, "provided" if args.token else "not provided")
+    log.info("\nDISCOVERY: Starting repository discovery with local patterns: %s and GitHub token: %s", args.local, "provided" if args.token else "not provided")
     repos = discover(local_patterns=args.local, github_token=args.token)
     
     # delete unchanged repositories
-    log.info("Removing unchanged repositories from the list of discovered repositories")
+    log.info("\nSTATE DETECTION: Removing unchanged repositories from the list")
     repos = remove_unchanged_repos(repos)
+    log.info("%d repositories have changed and will be scanned", len(repos))
+    for repo in repos:
+        log.info("- %s", repo["name"])
+
+    # TEMPORARY -- remove state file after each run for testing purposes
+    from pathlib import Path
+    state_file = Path(__file__).parent.parent / ".repodoc-state.json"
+    if state_file.exists():
+        state_file.unlink()
+    #############
 
     # scan the discovered repositories to gather information deterministically
-    log.info("Scanning repositories for information")
+    log.info("\nEXTRACT INFO: Scanning repositories for information")
     scan(repos)
 
     # passing information to LLM to generate documentation

@@ -133,5 +133,5 @@ def discover(
     if token:
         repos.extend(discover_github(token))
 
-    log.info("\nDiscovered %d repos total", len(repos))
+    log.info("Discovered %d repos total", len(repos))
     return repos
