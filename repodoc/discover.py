@@ -91,7 +91,10 @@ def discover_github(token: str) -> list[dict]:
             headers=headers,
             params={"per_page": 100, "page": page, "type": "all"},
         )
-        r.raise_for_status() # handle any HTTP errors
+        if r.status_code == 401:
+            log.warning("Invalid GitHub token, skipping GitHub discovery")
+            return []
+        r.raise_for_status()
         batch = r.json()
         if not batch:
             break # no more repos to fetch
@@ -126,9 +129,9 @@ def discover(
     if local_patterns:
         repos.extend(discover_local(local_patterns))
 
-    # token = github_token or os.environ.get("GITHUB_TOKEN")
-    # if token:
-    #     repos.extend(discover_github(token))
+    token = github_token or os.environ.get("GITHUB_TOKEN")
+    if token:
+        repos.extend(discover_github(token))
 
-    log.info("Discovered %d repos total", len(repos))
+    log.info("\nDiscovered %d repos total", len(repos))
     return repos

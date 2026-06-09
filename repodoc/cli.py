@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import logging
 from repodoc.discover import discover
+from repodoc.scan import scan
 import argparse
 
+log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
@@ -14,17 +16,24 @@ def main():
         """
         parser = argparse.ArgumentParser(description="Discover git repositories locally and on GitHub.")
 
-        # add -l as shorthand
+        # optional github token accepts a string. If not provided, will look for the GITHUB_TOKEN environment variable
         parser.add_argument("--token", help="GitHub token to authenticate API requests. If not provided, will look for the GITHUB_TOKEN environment variable.")
+
+        # optional local patterns accepts a list of strings/glob patterns
         parser.add_argument("-l", "--local", nargs="*", help="Glob patterns to search for local git repositories.")
+
         return parser
 
     parser = create_cli_interface()
     args = parser.parse_args()
-    print(args)
-    print("Discovering repositories...")
-    for r in discover(local_patterns=args.local, github_token=args.token):
-        print(r["name"])
+
+    log.info("Starting repository discovery with local patterns: %s and GitHub token: %s", args.local, "provided" if args.token else "not provided")
+    repos = discover(local_patterns=args.local, github_token=args.token)
+    for repo in repos:
+        print(repo)
+
+    scan(repos)
+
 
 if __name__ == "__main__":
     main()
