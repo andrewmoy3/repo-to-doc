@@ -1,5 +1,3 @@
-# {{repo_name}}
-
 ## What this is
 <!-- one sentence: what problem does this solve and why did I build it -->
 

@@ -177,15 +177,15 @@ def _scan_remote(name: str, clone_url: str) -> dict:
     }
 
 
-def scan(repos):
+def scan(repo):
     """
-    Accepts a list of repositories (both local and GitHub) and gathers deterministic information about each individual repo. 
+    Accepts a repository dict (both local and GitHub) and gathers deterministic information about each individual repo. 
 
     Arguments:
-        repos: A list of dictionaries containing information about repositories, including local and GitHub repositories.
+        repo: A dictionary containing information about repositories, including local and GitHub repositories.
 
     Returns:
-        A list of dictionaries with detailed information about each repository. Fields include:
+        A dictionary with detailed information about the repository. Fields include:
         Repository Name
         Languages (with counts)
         Top Level Modules (folders in the root of the repo)
@@ -195,35 +195,34 @@ def scan(repos):
         Dependency Files (presence of package.json, requirements.txt, go.mod, etc.)
         All Git Commit Messages
     """
-    scanned_repos = []
-    for repo in repos:
-        name, path, sha, clone_url = repo.get("name"), repo.get("path"), repo.get("sha"), repo.get("clone_url")
+    name, path, sha, clone_url = repo.get("name"), repo.get("path"), repo.get("sha"), repo.get("clone_url")
 
-        # scan local repo if path exists, else scan remote github repo
-        if path is not None:
-            print(f"Scanning local repository {name} at {path}")
-            scanned_repos.append(_scan_local(path))
-        else:
-            print(f"Scanning remote GitHub repository {name}")
-            scanned_repos.append(_scan_remote(name, clone_url))
+    # scan local repo if path exists, else scan remote github repo
+    if path is not None:
+        print(f"Scanning local repository {name} at {path}")
+        scanned_repo = _scan_local(Path(path))
+    else:
+        print(f"Scanning remote GitHub repository {name}")
+        scanned_repo = _scan_remote(name, clone_url)
 
-    ### TODO: DELETE testing code for seeing scanned repos
-    # write scanned repos to notepad/scanned_repos.txt
-    notepad_folder = Path(__file__).parent.parent / "notepad"
-    notepad_folder.mkdir(exist_ok=True)
-    with open(notepad_folder / "scanned_repos.txt", "w") as f:
-        for repo in scanned_repos:
-            f.write(f"Repository Name: {repo['name']}\n")
-            f.write(f"Languages: {repo['languages']}\n")
-            f.write(f"Top Level Modules: {repo['top_level_modules']}\n")
-            f.write(f"Signal Files: {repo['signal_files']}\n")
-            f.write(f"File Tree:\n")
-            for file in repo["file_tree"]:
-                f.write(f"  - {file}\n")
-            f.write(f"Dependency Files: {repo['dependencies']}\n")
-            f.write(f"README Contents:\n{repo['readme']}\n")
-            f.write(f"Git Commit Messages:\n")
-            for msg in repo["commit_messages"]:
-                f.write(f"  - {msg}\n")
-            f.write("\n")
-    return scanned_repos
+    # writes context to notepad/scanned_repos.txt for debugging
+    # notepad_folder = Path(__file__).parent.parent / "notepad"
+    # notepad_folder.mkdir(exist_ok=True)
+    # with open(notepad_folder / "scanned_repos.txt", "w") as f:
+#         if "error" in scanned_repo:
+#             continue
+#         f.write(f"Repository Name: {scanned_repo['name']}\n")
+#         f.write(f"Languages: {scanned_repo['languages']}\n")
+#         f.write(f"Top Level Modules: {scanned_repo['top_level_modules']}\n")
+#         f.write(f"Signal Files: {scanned_repo['signal_files']}\n")
+#         f.write(f"File Tree:\n")
+#         for file in scanned_repo["file_tree"]:
+#             f.write(f"  - {file}\n")
+#         f.write(f"Dependency Files: {scanned_repo['dependencies']}\n")
+#         f.write(f"README Contents:\n{scanned_repo['readme']}\n")
+#         f.write(f"Git Commit Messages:\n")
+#         for msg in scanned_repo["commit_messages"]:
+#             f.write(f"  - {msg}\n")
+#         f.write("\n")
+
+    return scanned_repo

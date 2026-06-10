@@ -49,8 +49,23 @@ def main():
     log.info("\nSTATE DETECTION: Removing unchanged repositories from the list")
     repos = remove_unchanged_repos(repos, force=args.force)
     log.info("%d repositories have changed and will be scanned", len(repos))
+
+    # loop through repos to scan, generate documentation, and write to file system
     for repo in repos:
-        log.info("- %s", repo["name"])
+        log.info("\n\n==============================")
+        log.info("PROCESSING %s", repo["name"])
+        # scan the discovered repositories to gather information deterministically
+        log.info("\nEXTRACT INFO: Scanning repository for information")
+        scanned_repo = scan(repo)
+
+        # passing information to LLM to generate documentation
+        log.info("\nGENERATING DOCUMENTATION: Generating documentation for repository using LLM")
+        document = gen_docs(scanned_repo)
+
+        # writing documentation to file system
+        output_path = args.output
+        log.info("\nWRITING TO FILES: Writing generated documentation to %s", output_path)
+        write(document, output_path)
 
     # TEMPORARY -- remove state file after each run for testing purposes
     # from pathlib import Path
@@ -58,19 +73,6 @@ def main():
     # if state_file.exists():
     #     state_file.unlink()
     #############
-
-    # scan the discovered repositories to gather information deterministically
-    log.info("\nEXTRACT INFO: Scanning repositories for information")
-    scanned_repos = scan(repos)
-
-    # passing information to LLM to generate documentation
-    log.info("\nGENERATING DOCUMENTATION: Generating documentation for repositories using LLM")
-    documents = gen_docs(scanned_repos)
-
-    # writing documentation to file system
-    output_path = args.output
-    log.info("\nWRITING TO FILES: Writing generated documentation to %s", output_path)
-    write(documents, output_path)
 
 if __name__ == "__main__":
     main()
