@@ -4,9 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this project is
 
-A CLI that turns GitHub repositories into Obsidian project overviews: one overview
-note per project plus one module note per top-level folder, joined by
-`[[wikilinks]]` and a top-level Map of Content.
+A CLI that turns GitHub repositories into Obsidian project overview markdown files.
 
 **The point is not "generate documentation."** The task being automated is *re-reading
 your own code to remember what it does* — a recurring, manual chore that happens
@@ -21,10 +19,10 @@ this into a README generator or a public-docs tool.
 discover.py  → find repos (local + GitHub API), get SHAs
 state.py     → removes unchanged repos based on SHA, saves state
 scan.py      → deterministic, language-agnostic structure extraction
-summarize.py → LLM writes prose from the structure of the codebase (scan.py output)
+generate.py → LLM writes prose from the structure of the codebase (scan.py output)
 write.py     → render Obsidian notes with idempotent managed regions + MOC
 
-cli.py       → orchestrates the 5 modules: discover → (skip if unchanged) → scan → summarize → write
+cli.py       → orchestrates the 5 modules: discover → state → scan → generate → write
 ```
 
 Each module is small and single-purpose (~100 lines). Preserve that separation;
@@ -56,50 +54,46 @@ script. If a change would undermine one, stop and flag it.
    unchanged repos are skipped. `--force` overrides. Keep re-runs cheap.
 
 5. **Fault isolation.** A repo that fails to process is logged and skipped — one
-   bad repo must never abort the whole run. Preserve the try/except-and-continue
-   loop in `cli.py`. API calls in `summarize.py` retry with exponential backoff.
-
-6. **Runs without an API key.** `summarize.py` falls back to a deterministic
-   offline stub when `ANTHROPIC_API_KEY` is unset, so the pipeline stays
-   testable. Keep `_stub()` working when changing the summarizer.
+   bad repo must never abort the whole run.  
 
 ## Commands
 
 ```bash
 # Install (editable)
 pip install -e .
+cp .env.example .env
 
-# Batch backfill (primary use case)
-repodoc --vault ~/ObsidianVault --local "~/code/school/*"
-repodoc --vault ~/ObsidianVault --github YOUR_USERNAME --local "~/code/*"
+# Generate docs for all GitHub repos using token from .env
+python repodoc/cli.py -e
 
-# Force full rebuild, ignore incremental state
-repodoc --vault ~/ObsidianVault --local "~/code/*" --force
+# Generate docs for specific GitHub repos by name using token from .env
+python repodoc/cli.py -e repo1 repo2
 
-# Verbose logging
-repodoc --vault ~/ObsidianVault --local "~/code/*" -v
+# Generate docs for all GitHub repos to a custom output folder
+python repodoc/cli.py -e --output path/to/vault/
 
-# Run without installing
-python -m repodoc.cli --vault ~/vault --local "~/code/*"
+# Generate docs for all GitHub repos using token from command line
+python repodoc/cli.py --token FAKE_TOKEN
+
+# Generate docs for repo1, repo2 using token from command line
+python repodoc/cli.py --token FAKE_TOKEN -e repo1 repo2
+
+# Generate docs for local repos matching glob pattern
+python repodoc/cli.py -l "/path/to/repos/*"
+
+# Force full rebuild of all remote repos
+python repodoc/cli.py -e --force
+
+# Force full rebuild of remote repos named repo1 and repo2
+python repodoc/cli.py -e repo1 repo2 --force
+`
 ```
-
 Environment variables: `ANTHROPIC_API_KEY` (summaries; omit for stub mode),
 `GITHUB_TOKEN` (higher API rate limits / private repos).
 
 ## Testing
-
 Always verify these four behaviors after touching the pipeline: discovery,
 incremental skip, idempotent writes (manual edits preserved), fault isolation.
-
-## Output layout (in the vault)
-
-```
-<vault>/Projects/_Projects MOC.md           # map of content, links all projects
-<vault>/Projects/<repo>/<repo>.md           # overview note
-<vault>/Projects/<repo>/<repo>---<module>.md # one per top-level module
-<vault>/.repodoc-state.json                 # incremental SHA state
-<vault>/.repodoc.log                        # run log
-```
 
 ## Conventions
 
