@@ -42,14 +42,15 @@ def remove_unchanged_repos(repos: list[dict], force: bool) -> list[dict]:
         else:
             # if repo IS in state, compare SHAs. If they match, skip. If they don't match, update state and return list
             # if force is True, skip SHA comparison and return all repos
-            if state[name]["sha"] != sha or force:
-                if state[name]["sha"] != sha:
-                    log.info("Repository '%s' has changed (SHA: %s -> %s)", name, state[name]["sha"], sha)
-                if force:
-                    log.info("Force flag is set. Updating repository '%s'.", name)
+            if state[name]["sha"] != sha:
+                log.info("Repository '%s' has changed (SHA: %s -> %s)", name, state[name]["sha"], sha)
                 state[name] = {"sha": sha, "path": path, "clone_url": clone_url}
                 ret_repos.append(repo)
-            if state[name]["sha"] == sha:
+            elif force:
+                log.info("Force flag is set. Updating repository '%s'.", name)
+                state[name] = {"sha": sha, "path": path, "clone_url": clone_url}
+                ret_repos.append(repo)
+            else: # (state[name]["sha"] == sha)
                 log.info("Repository '%s' has not changed: skipping", name)
     f.close()
     # write updated state back to file

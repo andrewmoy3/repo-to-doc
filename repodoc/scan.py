@@ -177,7 +177,7 @@ def _scan_remote(name: str, clone_url: str) -> dict:
     }
 
 
-def scan(repo):
+def scan(repo, output_path):
     """
     Accepts a repository dict (both local and GitHub) and gathers deterministic information about each individual repo. 
 
@@ -194,6 +194,7 @@ def scan(repo):
         README Contents (if README.md or README.txt exists, return the contents)
         Dependency Files (presence of package.json, requirements.txt, go.mod, etc.)
         All Git Commit Messages
+        Existing note (with manual info) if it exists 
     """
     name, path, sha, clone_url = repo.get("name"), repo.get("path"), repo.get("sha"), repo.get("clone_url")
 
@@ -205,24 +206,10 @@ def scan(repo):
         print(f"Scanning remote GitHub repository {name}")
         scanned_repo = _scan_remote(name, clone_url)
 
-    # writes context to notepad/scanned_repos.txt for debugging
-    # notepad_folder = Path(__file__).parent.parent / "notepad"
-    # notepad_folder.mkdir(exist_ok=True)
-    # with open(notepad_folder / "scanned_repos.txt", "w") as f:
-#         if "error" in scanned_repo:
-#             continue
-#         f.write(f"Repository Name: {scanned_repo['name']}\n")
-#         f.write(f"Languages: {scanned_repo['languages']}\n")
-#         f.write(f"Top Level Modules: {scanned_repo['top_level_modules']}\n")
-#         f.write(f"Signal Files: {scanned_repo['signal_files']}\n")
-#         f.write(f"File Tree:\n")
-#         for file in scanned_repo["file_tree"]:
-#             f.write(f"  - {file}\n")
-#         f.write(f"Dependency Files: {scanned_repo['dependencies']}\n")
-#         f.write(f"README Contents:\n{scanned_repo['readme']}\n")
-#         f.write(f"Git Commit Messages:\n")
-#         for msg in scanned_repo["commit_messages"]:
-#             f.write(f"  - {msg}\n")
-#         f.write("\n")
+    output_path = Path(output_path)
+    output_path.mkdir(parents=True, exist_ok=True)
+    existing_note_path = output_path / f"{name}.md"
+    if existing_note_path.exists():
+        scanned_repo["existing_note"] = existing_note_path.read_text()
 
     return scanned_repo

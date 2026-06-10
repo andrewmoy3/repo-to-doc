@@ -50,20 +50,21 @@ def main():
     repos = remove_unchanged_repos(repos, force=args.force)
     log.info("%d repositories have changed and will be scanned", len(repos))
 
+    output_path = args.output # define output folder path
+
     # loop through repos to scan, generate documentation, and write to file system
     for repo in repos:
         log.info("\n\n==============================")
         log.info("PROCESSING %s", repo["name"])
         # scan the discovered repositories to gather information deterministically
         log.info("\nEXTRACT INFO: Scanning repository for information")
-        scanned_repo = scan(repo)
+        scanned_repo = scan(repo, output_path)
 
         # passing information to LLM to generate documentation
         log.info("\nGENERATING DOCUMENTATION: Generating documentation for repository using LLM")
         document = gen_docs(scanned_repo)
 
         # writing documentation to file system
-        output_path = args.output
         log.info("\nWRITING TO FILES: Writing generated documentation to %s", output_path)
         write(document, output_path)
 
