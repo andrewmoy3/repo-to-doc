@@ -5,6 +5,8 @@ import os
 from repodoc.discover import discover
 from repodoc.state import remove_unchanged_repos
 from repodoc.scan import scan
+from repodoc.generate import gen_docs
+from repodoc.write import write
 import argparse
 
 log = logging.getLogger(__name__)
@@ -25,6 +27,9 @@ def main():
 
         # optional local patterns accepts a list of strings/glob patterns
         parser.add_argument("-l", "--local", nargs="*", help="Glob patterns to search for local git repositories.")
+
+        # optional output folder path for generated documentation
+        parser.add_argument("-o", "--output", help="Output folder path for generated documentation (default: repodoc_output/).", default="repodoc_output/")
 
         return parser
 
@@ -53,15 +58,16 @@ def main():
 
     # scan the discovered repositories to gather information deterministically
     log.info("\nEXTRACT INFO: Scanning repositories for information")
-    scan(repos)
+    scanned_repos = scan(repos)
 
     # passing information to LLM to generate documentation
     log.info("\nGENERATING DOCUMENTATION: Generating documentation for repositories using LLM")
-    # gen_docs(repos)
+    documents = gen_docs(scanned_repos)
 
     # writing documentation to file system
-    # log.info("\nWRITING TO FILES: Writing generated documentation to file system")
-    # write(repos)
+    output_path = args.output
+    log.info("\nWRITING TO FILES: Writing generated documentation to %s", output_path)
+    write(documents, output_path)
 
 if __name__ == "__main__":
     main()

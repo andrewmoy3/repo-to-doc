@@ -1,0 +1,8 @@
+notepad/
+.env
+__pycache__/
+*.egg-info/
+dist/
+.repodoc-state.json
+.repodoc.log
+assignment.pdf

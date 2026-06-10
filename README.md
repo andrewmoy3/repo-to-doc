@@ -8,9 +8,17 @@ Requires Python 3.10+.
 
 ```bash
 pip install -e .
+cp .env.example .env
 ```
 
+ENTER ANTHROPIC API KEY
+ENTER GITHUB PAT TOKEN FOR READING
+
 ## Usage
+
+Two CLI arguments
+local, token
+
 
 ------------------- implement later -----------------------
 ```bash

@@ -207,8 +207,11 @@ def scan(repos):
             print(f"Scanning remote GitHub repository {name}")
             scanned_repos.append(_scan_remote(name, clone_url))
 
+    ### TODO: DELETE testing code for seeing scanned repos
     # write scanned repos to notepad/scanned_repos.txt
-    with open("notepad/scanned_repos.txt", "w") as f:
+    notepad_folder = Path(__file__).parent.parent / "notepad"
+    notepad_folder.mkdir(exist_ok=True)
+    with open(notepad_folder / "scanned_repos.txt", "w") as f:
         for repo in scanned_repos:
             f.write(f"Repository Name: {repo['name']}\n")
             f.write(f"Languages: {repo['languages']}\n")

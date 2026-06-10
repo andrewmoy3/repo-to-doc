@@ -18,11 +18,11 @@ this into a README generator or a public-docs tool.
 ## Architecture (data flow)
 
 ```
-discover.py  → find repos (local + GitHub API), clone if needed, get SHAs
+discover.py  → find repos (local + GitHub API), get SHAs
+state.py     → removes unchanged repos based on SHA, saves state
 scan.py      → deterministic, language-agnostic structure extraction
 summarize.py → LLM writes prose from the structure of the codebase (scan.py output)
 write.py     → render Obsidian notes with idempotent managed regions + MOC
-state.py     → per-repo last-processed SHA for incremental skip
 
 cli.py       → orchestrates the 5 modules: discover → (skip if unchanged) → scan → summarize → write
 ```
