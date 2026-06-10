@@ -113,13 +113,14 @@ def discover_github(token: str) -> list[dict]:
 def discover(
     local_patterns: list[str] | None = None,
     github_token: str | None = None,
+    specified_repos: list[str] | None = None,
 ) -> list[dict]:
     """
     Discovers repositories from the local filesystem and pulls from GitHub. 
 
     Arguments (both optional):
         local_patterns: List of glob patterns to search for local git repositories.
-        github_token: GitHub token to authenticate API requests. If not provided, will look for the GITHUB_TOKEN environment variable.
+        github_token: GitHub token to authenticate API requests.
 
     Returns:   
         A list of dictionaries with each entry containing information about a repository.
@@ -129,9 +130,16 @@ def discover(
     if local_patterns:
         repos.extend(discover_local(local_patterns))
 
-    token = github_token or os.environ.get("GITHUB_TOKEN")
-    if token:
-        repos.extend(discover_github(token))
+    if github_token:
+        repos.extend(discover_github(github_token))
 
-    log.info("Discovered %d repos total", len(repos))
+    # If specified_repos is provided, filter the discovered repos to only include those in the specified list
+    if specified_repos:
+        ret_repos = []
+        for repo in repos:
+            if repo["name"] in specified_repos:
+                ret_repos.append(repo)
+        repos = ret_repos
+
+    log.info("Returning %d total repos", len(repos))
     return repos

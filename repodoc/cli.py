@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from repodoc.discover import discover
 from repodoc.state import remove_unchanged_repos
 from repodoc.scan import scan
@@ -16,9 +17,11 @@ def main():
         Creates parser, defines cli arguments with `--help` descriptions
         """
         parser = argparse.ArgumentParser(description="Discover git repositories locally and on GitHub.")
+        # optional flag that lets program use GITHUB_TOKEN environment variable
+        parser.add_argument("-e", "--env", nargs="*", help="Use GITHUB_TOKEN environment variable for GitHub discovery. Specify remote repos by name to limit discovery (default behavior discovers all remote repos).")
 
-        # optional github token accepts a string. If not provided, will look for the GITHUB_TOKEN environment variable
-        parser.add_argument("--token", help="GitHub token to authenticate API requests. If not provided, will look for the GITHUB_TOKEN environment variable.")
+        # optional github token accepts a string. 
+        parser.add_argument("--token", help="Pass GitHub token to authenticate API requests. Overrides --env if both are provided.")
 
         # optional local patterns accepts a list of strings/glob patterns
         parser.add_argument("-l", "--local", nargs="*", help="Glob patterns to search for local git repositories.")
@@ -29,8 +32,10 @@ def main():
     args = parser.parse_args()
 
     # discover repos from local and github using CLI arguments
-    log.info("\nDISCOVERY: Starting repository discovery with local patterns: %s and GitHub token: %s", args.local, "provided" if args.token else "not provided")
-    repos = discover(local_patterns=args.local, github_token=args.token)
+    token = os.environ.get("GITHUB_TOKEN") if args.env is not None else args.token
+    log.info("\nDISCOVERY: Starting repository discovery with local patterns: %s and GitHub token: %s", args.local, "provided" if token else "not provided")
+    print(args.env)
+    repos = discover(local_patterns=args.local, github_token=token, specified_repos=args.env)
     
     # delete unchanged repositories
     log.info("\nSTATE DETECTION: Removing unchanged repositories from the list")
@@ -51,11 +56,11 @@ def main():
     scan(repos)
 
     # passing information to LLM to generate documentation
-    # log.info("Generating documentation for repositories using LLM")
+    log.info("\nGENERATING DOCUMENTATION: Generating documentation for repositories using LLM")
     # gen_docs(repos)
 
     # writing documentation to file system
-    # log.info("Writing generated documentation to file system")
+    # log.info("\nWRITING TO FILES: Writing generated documentation to file system")
     # write(repos)
 
 if __name__ == "__main__":
