@@ -31,6 +31,9 @@ def main():
         # optional output folder path for generated documentation
         parser.add_argument("-o", "--output", help="Output folder path for generated documentation (default: repodoc_output/).", default="repodoc_output/")
 
+        # optional flag to force full rebuild of specified repos, ignoring incremental state
+        parser.add_argument("-f", "--force", action="store_true", help="Force full rebuild, ignoring incremental state. Specify repo names to limit to specific repos (default behavior forces rebuild of all discovered repos).")
+
         return parser
 
     parser = create_cli_interface()
@@ -44,16 +47,16 @@ def main():
     
     # delete unchanged repositories
     log.info("\nSTATE DETECTION: Removing unchanged repositories from the list")
-    repos = remove_unchanged_repos(repos)
+    repos = remove_unchanged_repos(repos, force=args.force)
     log.info("%d repositories have changed and will be scanned", len(repos))
     for repo in repos:
         log.info("- %s", repo["name"])
 
     # TEMPORARY -- remove state file after each run for testing purposes
-    from pathlib import Path
-    state_file = Path(__file__).parent.parent / ".repodoc-state.json"
-    if state_file.exists():
-        state_file.unlink()
+    # from pathlib import Path
+    # state_file = Path(__file__).parent.parent / ".repodoc-state.json"
+    # if state_file.exists():
+    #     state_file.unlink()
     #############
 
     # scan the discovered repositories to gather information deterministically

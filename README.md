@@ -1,8 +1,8 @@
 # repodoc
 
-Turns GitHub repositories into Obsidian project overviews — one overview note per repo, one module note per top-level folder, joined by `[[wikilinks]]` and a Map of Content.
+A command line Python tool that converts local/GitHub git repositories into Markdown project overviews. Designed for personal use in Obsidian to integrate with manually typed notes and resources.
 
-## Install
+## Setup
 
 Requires Python 3.10+.
 
@@ -11,31 +11,60 @@ pip install -e .
 cp .env.example .env
 ```
 
-ENTER ANTHROPIC API KEY
-ENTER GITHUB PAT TOKEN FOR READING
+1. Enter Anthropic API Key in `.env` to enable LLM summaries (other APIs, local models not yet supported)
+2. Enter GitHub personal access token in `.env` for access to your private repos (can also pass token via command line argument at run time)
+    - To generate GitHub PAT: 
+    - Go to GitHub > Settings > Developer settings > Personal access tokens
+    - Generate fine-grained token with repository access to all repos you want to document
 
 ## Usage
 
-Two CLI arguments
-local, token
+### Basic Usage
 
+If both API keys are provided in `.env`, generate project overview markdown files for all remote GitHub repositories by navigating to the project root and running:
 
-------------------- implement later -----------------------
 ```bash
-# Scan local repos matching a glob
-repodoc --vault ~/ObsidianVault --local "~/code/*"
+python repodoc/cli.py -e
+```
 
-# Also pull repos from GitHub
-repodoc --vault ~/ObsidianVault --github YOUR_USERNAME --local "~/code/*"
+.md files will be saved to `repodoc_output/` in the project root
 
-# Force full rebuild (ignore incremental state)
-repodoc --vault ~/ObsidianVault --local "~/code/*" --force
+### Command Line Arguments
 
-# Verbose logging
-repodoc --vault ~/ObsidianVault --local "~/code/*" -v
+| Argument | Purpose | Number Arguments | Notes |
+|---|---|---|---|
+| `-e`, `--env` | Load GitHub PAT from `.env`, specify specific remote repos by name | (0, $\infty$)| If no arguments passed, loads/documents all accessible GitHub repos.|
+| `--token` | Pass GitHub PAT manually via command line | (1) | Overrides `--env` |
+| `-l`, `--local` | Path to local repositories (glob pattern) | (1, $\infty$) |  |
+| `-o`, `--output` | Output folder path | (1) | Default folder is `repodoc_output/` in the project root  |
+| `-f`, `--force` | Ignore state, force regenerate repo docs| 0 |  |
 
-# Without installing
-python -m repodoc.cli --vault ~/ObsidianVault --local "~/code/*"
+### Example commands
+
+```bash
+# Generate docs for all GitHub repos using token from .env
+python repodoc/cli.py -e
+
+# Generate docs for specific GitHub repos by name using token from .env
+python repodoc/cli.py -e repo1 repo2
+
+# Generate docs for all GitHub repos to a custom output folder
+python repodoc/cli.py -e --output path/to/vault/
+
+# Generate docs for all GitHub repos using token from command line
+python repodoc/cli.py --token FAKE_TOKEN
+
+# Generate docs for repo1, repo2 using token from command line
+python repodoc/cli.py --token FAKE_TOKEN -e repo1 repo2
+
+# Generate docs for local repos matching glob pattern
+python repodoc/cli.py -l "/path/to/repos/*"
+
+# Force full rebuild of all remote repos
+python repodoc/cli.py -e --force
+
+# Force full rebuild of remote repos named repo1 and repo2
+python repodoc/cli.py -e repo1 repo2 --force
 ```
 -----------------------------------------------------------
 
@@ -49,11 +78,8 @@ python -m repodoc.cli --vault ~/ObsidianVault --local "~/code/*"
 ## Output
 
 ```
-<vault>/Projects/_Projects MOC.md             # links all projects
-<vault>/Projects/<repo>/<repo>.md             # overview note
-<vault>/Projects/<repo>/<repo>---<module>.md  # one per top-level folder
 <vault>/.repodoc-state.json                   # incremental SHA state
-<vault>/.repodoc.log                          # run log
+<project_root>/repodoc_output/                # default output folder
 ```
 
 Re-runs only regenerate notes for repos whose HEAD SHA has changed since the last run. Manual edits to notes are preserved outside the auto-generated region.

@@ -2,7 +2,10 @@ import json
 import os
 from pathlib import Path
 
-def remove_unchanged_repos(repos: list[dict]) -> list[dict]:
+import logging
+log = logging.getLogger(__name__)
+
+def remove_unchanged_repos(repos: list[dict], force: bool) -> list[dict]:
     """
     Checks if an update is necessary by comparing the SHA of the HEAD commit to the latest version. Keeps a JSON state file in the root of the project with an entry for each repository. If the SHAs match, removes that repo from the list. Returns the list of repositories that need to be updated.
 
@@ -38,9 +41,16 @@ def remove_unchanged_repos(repos: list[dict]) -> list[dict]:
             ret_repos.append(repo)
         else:
             # if repo IS in state, compare SHAs. If they match, skip. If they don't match, update state and return list
-            if state[name]["sha"] != sha:
+            # if force is True, skip SHA comparison and return all repos
+            if state[name]["sha"] != sha or force:
+                if state[name]["sha"] != sha:
+                    log.info("Repository '%s' has changed (SHA: %s -> %s)", name, state[name]["sha"], sha)
+                if force:
+                    log.info("Force flag is set. Updating repository '%s'.", name)
                 state[name] = {"sha": sha, "path": path, "clone_url": clone_url}
                 ret_repos.append(repo)
+            if state[name]["sha"] == sha:
+                log.info("Repository '%s' has not changed: skipping", name)
     f.close()
     # write updated state back to file
     with open(STATE_FILE, "w") as f:

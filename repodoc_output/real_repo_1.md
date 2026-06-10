@@ -1,33 +1,32 @@
 # real_repo_1
 
-# real_repo_1
-
 ## What this is
-A strikeout prediction model that analyzes baseball statcast data to predict pitcher strikeouts based on hitter and pitcher characteristics.
+A strikeout prediction system that models pitcher and hitter performance using historical MLB statcast data to predict strikeout outcomes.
 
 ## How it works
-I'm ingesting raw statcast data (2015-2025) into a DuckDB database, then building separate hitter and pitcher tables with aggregated pitch statistics. The predictor likely uses these tables to make strikeout predictions.
+Raw statcast data (2015-2025) is pulled into parquet files, then processed into a DuckDB database. Separate pitcher and hitter tables are built with player identifiers, names, and pitch counts. The main prediction logic lives in `db_funcs/get_player_data.py` to query player stats from the database.
 
 ## Key files / entry points
-- `scripts/get_raw_data.py` — fetches raw statcast data
-- `scripts/make_raw_duckdb.py` — loads parquet files into DuckDB
-- `scripts/make_hitters_table.py` & `scripts/make_pitchers_table.py` — builds aggregated player tables
-- `src/k_predictor/db_funcs/get_player_data.py` — queries player data from DB
+- `scripts/get_raw_data.py` — fetches statcast data
+- `scripts/make_raw_duckdb.py` — converts parquet to DuckDB
+- `scripts/make_pitchers_table.py` / `scripts/make_hitters_table.py` — builds the pitcher/hitter lookup tables
+- `src/k_predictor/db_funcs/get_player_data.py` — core query logic
+- `src/k_predictor/paths.py` — path configuration
 
 ## Tech stack
-Python, DuckDB (for data storage), Parquet (raw data format), setuptools (editable install via pyproject.toml)
+Python, DuckDB (database), parquet (raw data storage), editable pip install via pyproject.toml
 
 ## What to remember
-- This is set up as an editable install (`pip install -e .`), so changes to src are live
-- Data flows: raw parquets → DuckDB → player tables
-- There's a `notepad/` directory with test scripts—check those if I need to debug individual pieces
-- The project was recently restructured (src layout reorganized, paths.py moved)
+- Project uses editable install (`pip install -e .`) — changes to `src/` reflect immediately
+- Data pipeline: raw parquets → DuckDB → player tables
+- The `notepad/` folder is scratch work (duck.py, pandas_test.py, test.py) — can probably ignore
+- Recently restructured the project layout; paths.py handles the config
 
 ## Current state
-In progress — infrastructure is in place (data fetching, DB setup, player tables), but the actual prediction model isn't visible yet
+In progress — infrastructure is set up, data pipeline working, but the actual prediction model logic seems incomplete
 
 ## What's next
-Build out the actual strikeout prediction logic, probably in src/k_predictor/. Need to define what features go into the model and train/test it.
+Need to build out the actual strikeout prediction model using the pitcher/hitter tables. The database and player lookup functions are ready to consume.
 
 ## Related projects
-None visible in the repo data
+None noted in the repo.
