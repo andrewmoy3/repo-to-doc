@@ -1,8 +1,11 @@
+import re
 import anthropic
 from pathlib import Path
 
 import logging
 log = logging.getLogger(__name__)
+
+_MARKER = re.compile(r"(^#{1,6} .+\n)?<!-- repodoc:auto:(start|end):[\w-]+ -->\n?", re.MULTILINE)
 
 def gen_docs(scanned_repo: dict) -> str:
     """
@@ -34,14 +37,18 @@ def gen_docs(scanned_repo: dict) -> str:
     dependencies = list_to_string(scanned_repo.get("dependencies"))
     readme = scanned_repo.get("readme")
     commit_messages = list_to_string(scanned_repo.get("commit_messages"))
-    existing_note = scanned_repo.get("existing_note", "")
+    # remove headers and markers from existing note to feed as context
+    existing_note = _MARKER.sub("", scanned_repo.get("existing_note", ""))
 
     prompt = f"""
     You are helping a developer recall one of their own projects after being away from it for a while.
 
-    Fill out the following note template for the repository "{name}". Write in first person as if the developer is writing notes to their future self. Be concise — this is a personal recall aid, not documentation for others. Only include information you can confidently infer from the provided data; do not invent details.
+    Fill out the following note template for the repository "{name}". Write in first person as if the developer is writing notes to their future self. Be concise — this is a personal recall aid, not documentation for others. Only include information you can confidently infer from the provided data; do not invent details. 
 
     ## Repository data
+
+    **Existing note with additional manual info (if any):**
+    {existing_note or "No existing note found."}
 
     **Languages:**
     {language_str}
@@ -63,10 +70,7 @@ def gen_docs(scanned_repo: dict) -> str:
     **Commit history (most recent first):**
     {commit_messages}
 
-    **Existing note with additional manual info (if any):**
-    {existing_note or "No existing note found."}
-
-    ## Note template to fill out
+    ## Note template to fill out: Preserve all headings exactly as they appear in the template. Fill out the content according to the provided instructions, then delete the instructions. Do not add a title or any additional sections/headings.
     {template}
     """
 
@@ -84,7 +88,8 @@ def gen_docs(scanned_repo: dict) -> str:
             f.write("\n\n\n")
 
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        model="claude-sonnet-4-6",
+        # model="claude-haiku-4-5-20251001",
         max_tokens=2048,
         messages=[{"role": "user", "content": prompt}]
     )
