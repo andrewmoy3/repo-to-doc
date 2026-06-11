@@ -51,7 +51,6 @@ def _write_idempotent(path: Path, new_markdown: str) -> None:
 
     def replace_section(m: re.Match) -> str:
         nonlocal idx
-        print(f"replacing: {m.group()!r}\n\n")
         if idx < len(new_sections):
             section = new_sections[idx]
             idx += 1

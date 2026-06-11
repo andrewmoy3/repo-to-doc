@@ -42,7 +42,6 @@ def main():
     # discover repos from local and github using CLI arguments
     token = os.environ.get("GITHUB_TOKEN") if args.env is not None else args.token
     log.info("\nDISCOVERY: Starting repository discovery with local patterns: %s and GitHub token: %s", args.local, "provided" if token else "not provided")
-    print(args.env)
     repos = discover(local_patterns=args.local, github_token=token, specified_repos=args.env)
     
     # delete unchanged repositories
